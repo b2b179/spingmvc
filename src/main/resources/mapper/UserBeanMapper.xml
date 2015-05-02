@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 对应DAO层接口 -->
+<mapper namespace="com.zpark.michael.dao.IUserDAO">
+	<sql id="user_tbl">t_user</sql>
+	<sql id="group_tbl">t_group</sql>
+	<sql id="user_cls">u.user_id userId,u.user_name userName ,u.email,u.age,u.image,u.description,u.salt</sql>
+	<sql id="group_cls">g.group_id groupId,g.group_name groupName ,g.create_date createDate</sql>
+	<sql id="user_group_cls">userId,userName,email,age,image,description,salt ,groupId,groupName,createDate</sql>
+	<resultMap id="resultUserList" type="UserBean">
+		<id column="userId" property="userId"/>
+		<result column="userName" property="userName"/>
+		<result column="age" property="age"/>
+		<result column="email" property="email"/>
+		<result column="salt" property="salt"/>
+		<result column="image" property="image"/>
+		<result column="description" property="description"/>
+		<association property="group" javaType="GroupBean">
+			<id column="groupId" property="groupId"/>
+			<result column="groupName" property="groupName"/>
+			<result column="createDate" property="createDate"/>
+		</association> 
+	</resultMap>
+	<!-- id 对应方法名 -->
+	<select id="selectUser" resultMap="resultUserList">
+		select 
+			<include refid="user_group_cls"/>
+		from(
+			select 
+				rownum rn,
+				<include refid="user_cls"/>,
+				<include refid="group_cls"/> 
+			from 
+				<include refid="user_tbl"/> u
+				left join 
+				<include refid="group_tbl"/> g
+				on u.t_group_id = g.group_id
+				where rownum &lt;= #{end}
+			)
+		where rn &gt; #{start}
+	</select>
+	 <select id="selectUserByGroupId"  resultMap="resultUserList">
+		select 
+			<include refid="user_group_cls"/>
+		from(
+			select 
+				rownum rn,
+				<include refid="user_cls"/>,
+				<include refid="group_cls"/> 
+			from 
+				<include refid="user_tbl"/> u
+				left join 
+				<include refid="group_tbl"/> g
+				on u.t_group_id = g.group_id
+				where rownum &lt;= #{end}
+				<if test="groupId !=null and groupId>0">
+					and u.t_group_id = #{groupId}
+				</if>
+			)
+		where rn &gt; #{start}
+	</select>
+	
+	<select id="selectUserByGroupName"  resultMap="resultUserList">
+		select 
+			<include refid="user_group_cls"/>
+		from(
+			select 
+				rownum rn,
+				<include refid="user_cls"/>,
+				<include refid="group_cls"/> 
+			from 
+				<include refid="user_tbl"/> u
+				left join 
+				<include refid="group_tbl"/> g
+				on u.t_group_id = g.group_id
+				where rownum &lt;= #{end}
+				<if test="groupName !=null">
+					and g.group_name like  #{groupName}
+				</if>
+			)
+		where rn &gt; #{start}
+	</select>
+	
+	<select id="selectUserByUserName" resultMap="resultUserList">
+		select 
+			<include refid="user_group_cls"/>
+		from(
+			select 
+				rownum rn,
+				<include refid="user_cls"/>,
+				<include refid="group_cls"/> 
+			from 
+				<include refid="user_tbl"/> u
+				left join 
+				<include refid="group_tbl"/> g
+				on u.t_group_id = g.group_id
+				where rownum &lt;= #{end}
+				<if test="userName !=null">
+					and u.user_name like  #{userName}
+				</if>
+			)
+		where rn &gt; #{start}
+	</select>
+	
+	<select id="selectUserById" resultMap="resultUserList">
+		select 
+			<include refid="user_cls"/>,
+			<include refid="group_cls"/> 
+		from 
+			<include refid="user_tbl"/> u
+			left join 
+			<include refid="group_tbl"/> g
+			on u.t_group_id = g.group_id
+			where rownum &lt; 2
+			<if test="userId !=null and userId>0">
+				 and u.user_id =  #{userId}
+			</if>
+	</select>
+	<insert id="insertUser" parameterType="UserBean">
+		insert into <include refid="user_tbl"/>(user_id,user_name,age,email,salt,description,image,t_group_id) 
+		values(t_user_seq.nextVal,
+				#{userName,jdbcType=VARCHAR},
+				#{age,javaType=Integer,jdbcType=NUMERIC},
+				#{email,jdbcType=VARCHAR},
+				#{salt,jdbcType=VARCHAR},
+				#{description,jdbcType=VARCHAR},
+				#{image,jdbcType=VARCHAR},
+				#{group.groupId,javaType=Integer,jdbcType=NUMERIC})
+	</insert>
+	<update id="updateUser" parameterType="UserBean">
+		update <include refid="user_tbl"/>
+		set 
+			user_name = #{userName,jdbcType=VARCHAR},
+			age = #{age,javaType=Integer,jdbcType=NUMERIC},
+			email = #{email,jdbcType=VARCHAR},
+			salt = #{salt,jdbcType=VARCHAR},
+			image = #{image,jdbcType=VARCHAR},
+			description = #{description,jdbcType=VARCHAR},
+			t_group_id = #{group.groupId,javaType=Integer,jdbcType=NUMERIC}
+		where user_id =#{userId}
+	</update>
+	<delete id="deleteUserById" parameterType="java.lang.Integer">
+		delete from <include refid="user_tbl"/>  where user_id = #{userId}
+	</delete>
+	<select id="selectCountByGroupId" resultType="java.lang.Integer">
+		select count(user_id) total 
+		from 
+		<include refid="user_tbl"/> u
+		<if test="groupId !=null and groupId>0">
+			where u.t_group_id = #{groupId}
+		</if>
+	</select>
+	<select id="selectCountByGroupName" resultType="java.lang.Integer">
+		select count(user_id) total 
+		from 
+		<include refid="user_tbl"/> u
+		<if test="groupName !=null ">
+			where exists( 
+				select group_id from
+				<include refid="group_tbl"/> g
+			 	where u.t_group_id  = g.group_id and g.group_name like #{groupName}
+			 )
+		</if>
+	</select>
+	<select id="selectCountByUserName" resultType="java.lang.Integer">
+		select count(user_id) total 
+		from 
+		<include refid="user_tbl"/> u
+		<if test="userName !=null ">
+			where u.user_name like #{userName}
+		</if>
+	</select>
+	<select id="selectCount" resultType="java.lang.Integer">
+		select count(user_id) total from <include refid="user_tbl"/> 
+	</select>
+</mapper>

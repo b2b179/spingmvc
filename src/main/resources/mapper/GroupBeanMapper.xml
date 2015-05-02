@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 对应DAO层接口 -->
+<mapper namespace="com.zpark.michael.dao.IGroupDAO">
+	<sql id="group_tbl">t_group</sql>
+	<sql id="group_cls">g.group_id groupId,g.group_name groupName ,g.create_date createDate,g.t_group_id pgroupId</sql>
+	<resultMap id="resultGroupList" type="GroupBean">
+		<id column="groupId" property="groupId"/>
+		<result column="groupName" property="groupName"/>
+		<result column="createDate" property="createDate"/>
+		<association property="parent"  javaType="GroupBean">
+			<id column="pgroupId" property="groupId"/>
+			<result column="pgroupName" property="groupName"/>
+			<result column="pcreateDate" property="createDate"/>
+		</association> 
+	</resultMap>
+	<delete id="deleteDataById" parameterType="java.lang.Integer">
+		delete from <include refid="group_tbl"/> where group_id = #{pkId}
+	</delete>
+	<insert id="insertData" parameterType="GroupBean">
+		insert into <include refid="group_tbl"/>(
+				group_id,group_name,create_date,t_group_id)
+		values(t_group_seq.nextVal,
+				#{groupName,jdbcType=VARCHAR},
+				#{createDate,javaType=java.sql.Date,jdbcType=DATE},
+				#{parent.groupId,javaType=Integer,jdbcType=NUMERIC})
+	</insert>
+	<select id="selectAllData" resultMap="resultGroupList">
+		select  <include refid="group_cls"/> 
+		from <include refid="group_tbl"/> g
+	</select>
+	<select id="selectCount" resultType="java.lang.Integer">
+		select count(group_id) total from <include refid="group_tbl"/>
+	</select>
+	<select id="selectCountByName" resultType="java.lang.Integer" parameterType="java.lang.String">
+		select count(group_id) total from <include refid="group_tbl"/> 
+		<if test="search !=null">
+			where group_name like #{search}
+		</if>
+	</select>
+	<select id="selectData" resultMap="resultGroupList">
+		select * from
+		(
+			select rownum rn, <include refid="group_cls"/> 
+			from <include refid="group_tbl"/> g 
+			where rownum &lt;=#{end}
+		) where rn &gt; #{start}
+		
+	</select>
+	<select id="selectDataById" parameterType="java.lang.Integer" resultMap="resultGroupList">
+			select  <include refid="group_cls"/> 
+			from <include refid="group_tbl"/> g 
+			where rownum &lt; 2
+			<if test="pkId !=null and pkId>0">
+				and g.group_id = #{pkId}
+			</if>
+	</select>
+	<select id="selectDataByName" parameterType="java.lang.String" resultMap="resultGroupList">
+			select * from
+		(
+			select rownum rn, <include refid="group_cls"/> 
+			from <include refid="group_tbl"/> g 
+			where rownum &lt;=#{end}
+			<if test="search !=null ">
+				and g.group_name like #{search}
+			</if>
+		) where rn &gt; #{start}
+	</select>
+	<update id="updateData" parameterType="GroupBean">
+		update <include refid="group_tbl"/> 
+		set 
+			group_name=#{groupName,jdbcType=VARCHAR},
+			create_date=#{createDate,javaType=Date,jdbcType=DATE},
+			t_group_id =#{parent.groupId,javaType=Integer,jdbcType=NUMERIC}
+		where group_id = #{groupId}
+	</update>
+</mapper>

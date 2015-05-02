@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+	<!-- 1 引入属性文件,config.properties位于src/main/resources目录下 -->
+	<context:property-placeholder location="classpath:properties/config.properties"/>
+	<!-- 2 提供注解注入扫描  -->
+	<context:component-scan base-package="com.zpark.michael"/>
+	<!-- 3 配置视图层 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="contentType" value="text/html"/>
+		<!-- 页面目录地址 -->
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<!-- 文件名后缀 -->
+        <property name="suffix" value=".jsp"/>
+	</bean>
+	<!-- 4开启SpringMVC注解-->
+	<bean id="dateConverter" class="com.zpark.michael.converter.DateConverter"/>
+    <!-- 配置类型转换器
+    <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+            <property name="converters">
+            <set>
+            	<ref bean="dateConverter"/>
+            </set>
+            </property>
+        </bean> -->
+    <mvc:annotation-driven/>
+    <!-- 5 控制器异常处理 -->
+    <bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="exceptionMappings">
+              <props>
+                  <prop key="java.lang.Exception">error_all</prop>
+            </props>
+        </property>
+    </bean>
+    <!-- 6 文件上传 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+     	<property name="maxUploadSize" value="10240000"/>
+     </bean>
+     <mvc:default-servlet-handler/>
+     <!-- 静态资源处理 -->
+     <mvc:resources location="/WEB-INF/resources/" mapping="/resources/**"/>
+	<!-- mybatis 配置 -->
+	<import resource="classpath:spring/spring-mybatis.xml"/>
+</beans>

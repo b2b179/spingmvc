@@ -1,0 +1,55 @@
+Spring MVC 构建
+
+一： 引入Jar包
+二：配置前段控制器配置文件	spring.xml
+	1. 引入资源文件
+		<!-- spring 主配置文件 -->
+		<!-- 引入属性文件,config.properties位于src/main/resources目录下 -->
+		<context:property-placeholder location="classpath:properties/config.properties"/>
+	2.	开启注解扫描包 package
+		<!-- 配置Action -->
+        <context:component-scan base-package="com.zpark.action"/>
+    3.	配置视图解析器
+	    <!-- 3 配置视图层 -->
+		<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<!-- 页面目录地址 -->
+			<property name="prefix" value="/WEB-INF/views"/>
+			<!-- 文件名后缀 -->
+	        <property name="suffix" value=".jsp"/>
+		</bean>
+	4.	开启MVC注解 并添加类型转换器
+	    <!-- 配置类型转换器 -->
+       <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+            <property name="converters">
+            	<list>
+            		<bean class="com.zpark.converter.DateConverter"/>
+            	</list>
+            </property>
+        </bean>
+        <!-- 开启SpringMVC注解 -->
+        <mvc:annotation-driven conversion-service="conversionService" />
+    5. 配置拦截器
+    
+       <!-- 配置拦截器 -->
+        <mvc:interceptors>
+        	<mvc:interceptor>
+        		<mvc:mapping path="/back6/test*"/>
+        		<mvc:exclude-mapping path="/back6/test1"/>
+        		<bean class="com.zpark.interceptor.MyInterceptor"/>
+        	</mvc:interceptor>
+        </mvc:interceptors>
+    6. 配置文件上传
+   		 <!-- 文件上传 -->
+        <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        	<property name="maxUploadSize" value="10240000"/>
+        </bean>
+        
+     7. 全局异常处理
+     
+	   <!-- 异常配置 -->
+       <!--  <bean class="com.zpark.exception.MyExceptionResolver"/> --> 方法一
+       <context:component-scan base-package="com.zpark.exception"/> 方法二
+     8.开启静态资源放行
+     	方法一：<mvc:default-servlet-handler/>
+     	方法二：<mvc:resources location="/resource/" mapping="/WEB-INF/resource/**"/>
+	
